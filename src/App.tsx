@@ -16,6 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { Card, SRSSettings, AppConfig, CardSide } from './types';
+import { storageService } from './storageService';
 
 const CHINESE_FONTS = [
   { name: 'Standard', class: 'font-standard' },
@@ -29,11 +30,7 @@ export default function App() {
   const [cards, setCards] = useState<Card[]>([]);
   const [dueCards, setDueCards] = useState<Card[]>([]);
   const [srsSettings, setSrsSettings] = useState<SRSSettings[]>([]);
-  const [config, setConfig] = useState<AppConfig>({
-    frontSides: ['characters'],
-    backSides: ['meaning', 'pronunciation'],
-    chineseFont: 'font-standard'
-  });
+  const [config, setConfig] = useState<AppConfig>(storageService.getConfig());
 
   // Review State
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -42,8 +39,12 @@ export default function App() {
   const [timeTaken, setTimeTaken] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchData();
+    loadData();
   }, []);
+
+  useEffect(() => {
+    storageService.saveConfig(config);
+  }, [config]);
 
   useEffect(() => {
     if (view !== 'review') {
@@ -61,30 +62,16 @@ export default function App() {
     }
   }, [view, dueCards, startTime, isFlipped]);
 
-  const fetchData = async () => {
-    const [cardsRes, dueRes, srsRes] = await Promise.all([
-      fetch('/api/cards'),
-      fetch('/api/cards/due'),
-      fetch('/api/srs-settings')
-    ]);
-    setCards(await cardsRes.json());
-    setDueCards(await dueRes.json());
-    setSrsSettings(await srsRes.json());
+  const loadData = () => {
+    setCards(storageService.getCards());
+    setDueCards(storageService.getDueCards());
+    setSrsSettings(storageService.getSRSSettings());
   };
 
   const speak = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'zh-CN';
     window.speechSynthesis.speak(utterance);
-  };
-
-  const handleStartReview = () => {
-    if (dueCards.length > 0) {
-      setCurrentCardIndex(0);
-      setIsFlipped(false);
-      setStartTime(Date.now());
-      setTimeTaken(null);
-    }
   };
 
   const handleFlip = () => {
@@ -98,11 +85,7 @@ export default function App() {
   const handleReviewResult = async (success: boolean) => {
     if (!dueCards[currentCardIndex]) return;
 
-    await fetch(`/api/cards/${dueCards[currentCardIndex].id}/review`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ timeTaken, success })
-    });
+    storageService.reviewCard(dueCards[currentCardIndex].id, timeTaken || 0, success);
 
     if (currentCardIndex < dueCards.length - 1) {
       setIsFlipped(false);
@@ -118,7 +101,7 @@ export default function App() {
       setStartTime(null);
       setIsFlipped(false);
       setTimeTaken(null);
-      fetchData();
+      loadData();
     }
   };
 
@@ -314,36 +297,28 @@ function ManageView({ cards, onRefresh }: any) {
   const [newCard, setNewCard] = useState({ characters: '', meaning: '', pronunciation: '' });
   const [importText, setImportText] = useState('');
 
-  const handleAdd = async () => {
-    await fetch('/api/cards', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newCard)
-    });
+  const handleAdd = () => {
+    storageService.addCard(newCard);
     setNewCard({ characters: '', meaning: '', pronunciation: '' });
     setIsAdding(false);
     onRefresh();
   };
 
-  const handleImport = async () => {
+  const handleImport = () => {
     const lines = importText.split('\n').filter(l => l.trim());
     const newCards = lines.map(line => {
       const [characters, meaning, pronunciation] = line.split(',').map(s => s.trim());
       return { characters, meaning, pronunciation: pronunciation || '' };
     });
     
-    await fetch('/api/cards/import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cards: newCards })
-    });
+    storageService.importCards(newCards);
     setImportText('');
     onRefresh();
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
     if (confirm('Delete this card?')) {
-      await fetch(`/api/cards/${id}`, { method: 'DELETE' });
+      storageService.deleteCard(id);
       onRefresh();
     }
   };
@@ -425,12 +400,8 @@ function SettingsView({ config, setConfig, srsSettings, onRefresh }: any) {
     setLocalSrs(srsSettings);
   }, [srsSettings]);
 
-  const handleSaveSrs = async () => {
-    await fetch('/api/srs-settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ settings: localSrs })
-    });
+  const handleSaveSrs = () => {
+    storageService.saveSRSSettings(localSrs);
     onRefresh();
     alert('SRS Settings saved!');
   };
