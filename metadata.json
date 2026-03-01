@@ -1,0 +1,5 @@
+{
+  "name": "Hanzi Speed SRS",
+  "description": "A Chinese flashcard app where answering speed determines your Spaced Repetition progress. Features multi-sided cards, TTS pronunciation, and customizable SRS steps.",
+  "requestFramePermissions": []
+}

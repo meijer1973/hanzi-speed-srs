@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-chinese: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-kai: "Kaiti", "STKaiti", serif;
+  --font-billboard: "ZCOOL KuaiLe", "Comic Sans MS", cursive;
+}
+
+@layer base {
+  body {
+    @apply bg-[#fdfaf6] text-[#2c1810];
+  }
+}
+
+@layer components {
+  .chinese-card {
+    @apply bg-white border-2 border-[#8b0000] rounded-lg shadow-xl relative overflow-hidden;
+    background-image: radial-gradient(#8b0000 0.5px, transparent 0.5px);
+    background-size: 20px 20px;
+    background-color: #fffdfa;
+  }
+
+  .btn-primary {
+    @apply bg-[#8b0000] text-white px-6 py-2 rounded-full hover:bg-[#a00000] transition-colors font-bold;
+  }
+
+  .btn-secondary {
+    @apply border-2 border-[#8b0000] text-[#8b0000] px-6 py-2 rounded-full hover:bg-[#8b0000] hover:text-white transition-all font-bold;
+  }
+}
+
+/* Custom Fonts for Chinese Characters */
+.font-standard { font-family: 'Noto Sans SC', sans-serif !important; }
+.font-artistic { font-family: 'Ma Shan Zheng', cursive !important; }
+.font-handwritten { font-family: 'Zhi Mang Xing', cursive !important; }
+.font-playful { font-family: 'ZCOOL KuaiLe', cursive !important; }
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+}
